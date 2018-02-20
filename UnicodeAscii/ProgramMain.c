@@ -1,4 +1,4 @@
-﻿#include "App.h"
+#include "App.h"
 #include "MainWin.h"
 
 void APIENTRY RawMain(void)
