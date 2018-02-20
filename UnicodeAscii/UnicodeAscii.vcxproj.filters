@@ -1,0 +1,53 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="MyWinAPI">
+      <UniqueIdentifier>{bb774f28-de09-44f7-a799-1700fd269f80}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MyWinAPI\EscAscii Impl">
+      <UniqueIdentifier>{68b0ae9f-9e61-4247-95c2-6d82dac2571d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MainWin">
+      <UniqueIdentifier>{c9a5c49c-1058-48f7-ad7b-ea214965c5f3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="MyWinAPI\EscAscii.c">
+      <Filter>MyWinAPI\EscAscii Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="MyWinAPI\EscAscii_FromMulti.c">
+      <Filter>MyWinAPI\EscAscii Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="MyWinAPI\EscAscii_FromWide.c">
+      <Filter>MyWinAPI\EscAscii Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="MainWin_user.c">
+      <Filter>MainWin</Filter>
+    </ClCompile>
+    <ClCompile Include="MainWin.c">
+      <Filter>MainWin</Filter>
+    </ClCompile>
+    <ClCompile Include="vc_patch.c" />
+    <ClCompile Include="App.c" />
+    <ClCompile Include="ProgramMain.c" />
+    <ClCompile Include="App_UIFont.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="app.manifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="MyWinAPI\EscAscii_BaseImpl.h">
+      <Filter>MyWinAPI\EscAscii Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="MyWinAPI\EscAscii.h">
+      <Filter>MyWinAPI</Filter>
+    </ClInclude>
+    <ClInclude Include="MainWin.h">
+      <Filter>MainWin</Filter>
+    </ClInclude>
+    <ClInclude Include="MainWin_internal.h">
+      <Filter>MainWin</Filter>
+    </ClInclude>
+    <ClInclude Include="App.h" />
+  </ItemGroup>
+</Project>
