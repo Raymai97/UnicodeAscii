@@ -45,8 +45,8 @@
 #define WS_DEBUGBOX		(0)
 #endif
 
-#define APP_Name \
-	TEXT("UnicodeAscii")
+#define APP_Name		"UnicodeAscii"
+#define APP_VerStr		"v1.1"
 
 #define APP_GetLastHr() \
 	HRESULT_FROM_WIN32(GetLastError())
@@ -65,6 +65,47 @@
 #define E_CODEPAGE_NOT_SUPPORTED \
 	MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0)
 
+/*
+	App Struct .....
+*/
+
+typedef struct App_FontInfo {
+	LPCSTR pszName;
+	int ptSize;
+} App_FontInfo_t;
+
+typedef struct App_FontZoomSpec {
+	int defFontSize;
+	int minFontSize;
+	int maxFontSize;
+} App_FontZoomSpec_t;
+
+
+/*
+	App Global Constant ........
+*/
+
+enum App_Codepage {
+	/*
+		US English default.
+	*/
+	CP_Latin1 = 1252,
+	/*
+		Taiwan Traditional Chinese default.
+	*/
+	CP_Big5 = 950,
+	/*
+		China Simplified Chinese default.
+		Represent GBK (or GB1232 if pre-Win2k)
+	*/
+	CP_GBK_2312 = 936,
+	/*
+		Japan Japanese default.
+	*/
+	CP_ShiftJIS = 932
+};
+
+
 
 /*
 	App Global Memory Functions .........
@@ -81,10 +122,8 @@ EXTERN_C void MemFree(LPVOID ptr);
 EXTERN_C void App_Init(void);
 
 EXTERN_C HFONT App_CreateFont(
-	LPCTSTR pszName, int ptSize
+	App_FontInfo_t const *pInfo
 );
-
-EXTERN_C HFONT App_CreateEditBoxFont(void);
 
 EXTERN_C HFONT App_CreateEnglishFont(void);
 
@@ -94,12 +133,14 @@ EXTERN_C HWND App_CreateChild(
 	DWORD dwStyle, DWORD dwExStyle
 );
 
+EXTERN_C int App_FontSize_PtFromLog(int logSize);
+
+EXTERN_C int App_FontSize_LogFromPt(int ptSize);
+
+EXTERN_C void App_SetFocus(HWND hCtl);
+
 EXTERN_C void App_SetWindowClientSize(
 	HWND hwnd, int cx, int cy
-);
-
-EXTERN_C LRESULT CALLBACK App_CtlWndProc_Edit(
-	HWND hCtl, UINT msg, WPARAM w, LPARAM l
 );
 
 
@@ -129,10 +170,12 @@ EXTERN_C HRESULT OSGetHwndTextW(HWND hwnd, LPWSTR *ppsz, int *pcch);
 
 EXTERN_C int OSGetDPI(void);
 
+EXTERN_C WNDPROC OSGetButtonDefWndProc(void);
+
 EXTERN_C WNDPROC OSGetEditDefWndProc(void);
 
-EXTERN_C BOOL OSGetUserUILang(LANGID *pID);
+EXTERN_C BOOL OSQueryMessageFont(LOGFONT *lf);
 
-EXTERN_C BOOL OSGetUserLangID(LANGID *pID);
+EXTERN_C BOOL OSSupportGBK(void);
 
 EXTERN_C HRESULT OSSetClipboardTextA(LPCSTR pszStr, SIZE_T cbStr);

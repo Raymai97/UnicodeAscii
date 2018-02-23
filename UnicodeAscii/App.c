@@ -1,28 +1,68 @@
 #include "App.h"
+#include "AppEditBox.h"
 
 #define MY_CodepageNotSupported(cp) \
 	((cp) != CP_ACP && (cp) != CP_OEMCP && !IsValidCodePage(cp))
 
+
 typedef struct App App_t;
 struct App {
 	int dpi;
+	WNDPROC dwpButton;
 	WNDPROC dwpEdit;
 };
 
 static App_t s_App;
 
+typedef struct NCM {
+	UINT    cbSize;
+	int     iBorderWidth;
+	int     iScrollWidth;
+	int     iScrollHeight;
+	int     iCaptionWidth;
+	int     iCaptionHeight;
+	LOGFONT lfCaptionFont;
+	int     iSmCaptionWidth;
+	int     iSmCaptionHeight;
+	LOGFONT lfSmCaptionFont;
+	int     iMenuWidth;
+	int     iMenuHeight;
+	LOGFONT lfMenuFont;
+	LOGFONT lfStatusFont;
+	LOGFONT lfMessageFont;
+} NCM_t;
 
-static BOOL MyInitComCtl(void)
+
+enum MyFED_Type {
+	FED_CheckAvail = 1
+};
+
+typedef struct {
+	UINT fedType;
+} MyFED_Base_t;
+
+typedef struct {
+	MyFED_Base_t base;
+	BOOL avail;
+} MyFED_CheckAvail_t;
+
+
+static int CALLBACK MyFontEnumProc_CheckAvail(
+	void const *lplf, void const *lptm,
+	DWORD dwType, LPARAM user)
 {
-	typedef INITCOMMONCONTROLSEX ICCEX;
-	typedef BOOL(WINAPI *fn_t)(ICCEX const *);
-	fn_t fn = (fn_t)GetProcAddress(LoadLibraryA("comctl32"),
-		"InitCommonControlsEx");
-	if (fn) {
-		ICCEX icc = { sizeof(icc), ICC_WIN95_CLASSES };
-		return fn(&icc);
+	UNREFERENCED_PARAMETER(lplf);
+	UNREFERENCED_PARAMETER(lptm);
+	UNREFERENCED_PARAMETER(dwType);
+	BOOL done = FALSE;
+	UINT fedType = ((MyFED_Base_t *)user)->fedType;
+	if (fedType == FED_CheckAvail)
+	{
+		MyFED_CheckAvail_t *pFED = (void*)user;
+		pFED->avail = TRUE;
+		done = TRUE;
 	}
-	return FALSE;
+	return done ? 0 : 1;
 }
 
 
@@ -41,38 +81,31 @@ EXTERN_C void MemFree(LPVOID ptr)
 
 EXTERN_C void App_Init(void)
 {
-	MyInitComCtl();
+	LoadLibraryA("comctl32");
+	AppEditBox_Init();
 	s_App.dpi = OSGetDPI();
+	s_App.dwpButton = OSGetButtonDefWndProc();
 	s_App.dwpEdit = OSGetEditDefWndProc();
 }
 
-static int CALLBACK MyFontEnumProc_CheckAvail(
-	LOGFONT const *lplf, TEXTMETRIC const *lptm,
-	DWORD dwType, LPARAM user)
-{
-	UNREFERENCED_PARAMETER(lplf);
-	UNREFERENCED_PARAMETER(lptm);
-	UNREFERENCED_PARAMETER(dwType);
-	(*(BOOL*)user) = TRUE;
-	return 0;
-}
-
 EXTERN_C HFONT App_CreateFont(
-	LPCTSTR pszName, int ptSize)
+	App_FontInfo_t const *pInfo)
 {
-	int const dpi = s_App.dpi;
+	LPCSTR const pszName = pInfo->pszName;
+	int const ptSize = pInfo->ptSize;
 	HFONT hfo = NULL;
-	BOOL available = FALSE;
+	MyFED_CheckAvail_t enumDat = { FED_CheckAvail };
 	HDC hdc0 = NULL;
 	hdc0 = GetDC(NULL);
 	if (!hdc0) goto eof;
 
-	EnumFonts(hdc0, pszName, MyFontEnumProc_CheckAvail,
-		(LPARAM)&available);
-	if (!available) goto eof;
+	EnumFontsA(hdc0, pszName,
+		MyFontEnumProc_CheckAvail,
+		(LPARAM)&enumDat);
+	if (!enumDat.avail) goto eof;
 
-	hfo = CreateFont(
-		-MulDiv(ptSize, dpi, 72),
+	hfo = CreateFontA(
+		App_FontSize_LogFromPt(ptSize),
 		0, 0, 0, 0, 0, 0, 0, DEFAULT_CHARSET,
 		0, 0, 0, 0, pszName);
 eof:
@@ -92,6 +125,41 @@ EXTERN_C HWND App_CreateChild(
 		hwndParent, (HMENU)(WPARAM)id, NULL, NULL);
 }
 
+EXTERN_C int App_FontSize_PtFromLog(int logSize)
+{
+	return -MulDiv(logSize, 72, s_App.dpi);
+}
+
+EXTERN_C int App_FontSize_LogFromPt(int ptSize)
+{
+	return -MulDiv(ptSize, s_App.dpi, 72);
+}
+
+EXTERN_C void App_SetFocus(HWND hCtl)
+{
+	HWND hwndFocus = NULL;
+	WNDPROC wpFocus = NULL;
+	WNDPROC wpCtl = NULL;
+
+	hwndFocus = GetFocus();
+	wpFocus = (WNDPROC)GetWindowLongPtr(hwndFocus, GWLP_WNDPROC);
+	if (wpFocus == s_App.dwpButton)
+	{
+		DWORD dwStyle = GetWindowLong(hwndFocus, GWL_STYLE);
+		dwStyle &= ~BS_DEFPUSHBUTTON;
+		SendMessage(hwndFocus, BM_SETSTYLE, (WPARAM)dwStyle, TRUE);
+	}
+
+	wpCtl = (WNDPROC)GetWindowLongPtr(hCtl, GWLP_WNDPROC);
+	if (wpCtl == s_App.dwpButton)
+	{
+		DWORD dwStyle = GetWindowLong(hCtl, GWL_STYLE);
+		dwStyle |= BS_DEFPUSHBUTTON;
+		SendMessage(hCtl, BM_SETSTYLE, (WPARAM)dwStyle, TRUE);
+	}
+	SetFocus(hCtl);
+}
+
 EXTERN_C void App_SetWindowClientSize(
 	HWND hwnd, int cx, int cy)
 {
@@ -108,36 +176,6 @@ EXTERN_C void App_SetWindowClientSize(
 	cy = rc.bottom - rc.top;
 	SetWindowPos(hwnd, NULL, 0, 0, cx, cy,
 		SWP_NOMOVE | SWP_NOZORDER);
-}
-
-EXTERN_C LRESULT CALLBACK App_CtlWndProc_Edit(
-	HWND hCtl, UINT msg, WPARAM w, LPARAM l)
-{
-	LRESULT lResult = 0;
-	BOOL overriden = FALSE;
-	if (msg == WM_KEYDOWN)
-	{
-		/* If ESC or CTRL+A, Select All. */
-		if (GetAsyncKeyState(VK_ESCAPE) < 0 ||
-			(GetAsyncKeyState(VK_CONTROL) < 0 &&
-			GetAsyncKeyState('A') < 0))
-		{
-			SendMessage(hCtl, EM_SETSEL, 0, (LPARAM)-1);
-			overriden = TRUE;
-		}
-	}
-	if (!overriden)
-	{
-		lResult = CallWindowProc(s_App.dwpEdit, hCtl, msg, w, l);
-	}
-	if (msg == WM_GETDLGCODE)
-	{
-		/* Delegate TAB key to parent window. */
-		if (w == VK_TAB) {
-			lResult &= ~(DLGC_WANTALLKEYS);
-		}
-	}
-	return lResult;
 }
 
 
@@ -235,6 +273,7 @@ eof:
 #endif
 }
 
+
 EXTERN_C HRESULT OSGetHwndText(HWND hwnd, LPTSTR *ppsz, int *pLen)
 {
 	HRESULT hr = 0;
@@ -298,6 +337,13 @@ EXTERN_C int OSGetDPI(void)
 	return dpi;
 }
 
+EXTERN_C WNDPROC OSGetButtonDefWndProc(void)
+{
+	WNDCLASS wc = { 0 };
+	GetClassInfo(NULL, WC_BUTTON, &wc);
+	return wc.lpfnWndProc;
+}
+
 EXTERN_C WNDPROC OSGetEditDefWndProc(void)
 {
 	WNDCLASS wc = { 0 };
@@ -305,26 +351,23 @@ EXTERN_C WNDPROC OSGetEditDefWndProc(void)
 	return wc.lpfnWndProc;
 }
 
-EXTERN_C BOOL OSGetUserUILang(LANGID *pID)
+EXTERN_C BOOL OSQueryMessageFont(LOGFONT *lf)
 {
-	typedef LANGID(WINAPI *fn_t)(void);
-	fn_t fn = (fn_t)GetProcAddress(LoadLibraryA("kernel32"),
-		"GetUserDefaultUILanguage");
-	if (fn) {
-		*pID = fn();
-	}
-	return (fn != NULL);
+	BOOL ok = FALSE;
+	NCM_t ncm = { sizeof(ncm) };
+	ok = SystemParametersInfo(
+		SPI_GETNONCLIENTMETRICS, sizeof(ncm), &ncm, 0);
+	*lf = ncm.lfMessageFont;
+	return ok;
 }
 
-EXTERN_C BOOL OSGetUserLangID(LANGID *pID)
+EXTERN_C BOOL OSSupportGBK(void)
 {
-	typedef LANGID(WINAPI *fn_t)(void);
-	fn_t fn = (fn_t)GetProcAddress(LoadLibraryA("kernel32"),
-		"GetUserDefaultLangID");
-	if (fn) {
-		*pID = fn();
-	}
-	return (fn != NULL);
+	HRESULT hr = 0;
+	LPSTR psz = NULL;
+	hr = OSAllocMultiFromWide(&psz, CP_GBK_2312, L"\x3042\x6E2C", -1);
+	APP_SafeFree(psz, MemFree);
+	return (hr == S_OK);
 }
 
 EXTERN_C HRESULT OSSetClipboardTextA(LPCSTR pszStr, SIZE_T cbStr)

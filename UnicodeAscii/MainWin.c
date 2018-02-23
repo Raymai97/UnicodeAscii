@@ -85,7 +85,7 @@ EXTERN_C HRESULT MainWin_ShowModal(void)
 	wc.lpfnWndProc = MyWndProc;
 	wc.style = CS_HREDRAW | CS_VREDRAW;
 	RegisterClass(&wc);
-	hwnd = CreateWindowEx(0, s_pszSelfClass, s_pszSelfTitle,
+	hwnd = CreateWindowEx(0, s_pszSelfClass, NULL,
 		WS_OVERLAPPEDWINDOW & ~(WS_MAXIMIZEBOX | WS_SIZEBOX),
 		CW_USEDEFAULT, 0, 0, 0, NULL, NULL, NULL, pSelf);
 	if (!hwnd) {

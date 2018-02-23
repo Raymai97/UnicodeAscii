@@ -34,6 +34,23 @@ enum EscAsciiFlag {
 		Useful for DBCS like Shift-JIS.
 	*/
 	EAF_DbcsConti = 1 << 0,
+	/*
+		For each line input, enclose with double quote in such a way
+		that is suitable for coding use. For example, you will get
+		L"Hello\n" L"World" instead of the usual output.
+	*/
+	EAF_ForCoding = 1 << 1,
+	/*
+		(ForEncoding only) Use '\n' instead of '\r\n'
+		outside the string literal double quote.
+		Note that Win32 Edit control accept CrLf only.
+	*/
+	EAF_FC_RealLf = 1 << 2,
+	/*
+		(ForEncoding only) Use "\\r\\n" instead of "\\n"
+		inside the string literal double quote.
+	*/
+	EAF_FC_CodeCrLf = 1 << 3,
 
 	EAF__max = 1 << 30
 };
@@ -52,7 +69,7 @@ enum EscAsciiFlag {
 
 EXTERN_C
 HRESULT __stdcall
-EscAscii_FromWide(
+EscAscii_WideToAscii(
 	LPCWSTR pszWide,
 	SIZE_T cchWide,
 	UINT eafFlags,
@@ -62,7 +79,7 @@ EscAscii_FromWide(
 
 EXTERN_C
 HRESULT __stdcall
-EscAscii_FromMulti(
+EscAscii_MultiToAscii(
 	LPCSTR pszMulti,
 	SIZE_T cbMulti,
 	UINT eafFlags,

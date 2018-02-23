@@ -10,15 +10,15 @@
     <Filter Include="MainWin">
       <UniqueIdentifier>{c9a5c49c-1058-48f7-ad7b-ea214965c5f3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="MyWinAPI\StrOfInt Impl">
+      <UniqueIdentifier>{124d7b6c-0688-4b93-a6c8-2a3faed53fda}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AppEditBox">
+      <UniqueIdentifier>{f7cb4104-ba87-47f3-9479-b1838f2e7e47}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MyWinAPI\EscAscii.c">
-      <Filter>MyWinAPI\EscAscii Impl</Filter>
-    </ClCompile>
-    <ClCompile Include="MyWinAPI\EscAscii_FromMulti.c">
-      <Filter>MyWinAPI\EscAscii Impl</Filter>
-    </ClCompile>
-    <ClCompile Include="MyWinAPI\EscAscii_FromWide.c">
       <Filter>MyWinAPI\EscAscii Impl</Filter>
     </ClCompile>
     <ClCompile Include="MainWin_user.c">
@@ -31,6 +31,21 @@
     <ClCompile Include="App.c" />
     <ClCompile Include="ProgramMain.c" />
     <ClCompile Include="App_UIFont.c" />
+    <ClCompile Include="MyWinAPI\StrOfInt__CHAR_UINT32.c">
+      <Filter>MyWinAPI\StrOfInt Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="AppEditBox.c">
+      <Filter>AppEditBox</Filter>
+    </ClCompile>
+    <ClCompile Include="AppEditBox_zoom.c">
+      <Filter>AppEditBox</Filter>
+    </ClCompile>
+    <ClCompile Include="MyWinAPI\EscAscii_WideTo.c">
+      <Filter>MyWinAPI\EscAscii Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="MyWinAPI\EscAscii_MultiTo.c">
+      <Filter>MyWinAPI\EscAscii Impl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="app.manifest" />
@@ -49,5 +64,20 @@
       <Filter>MainWin</Filter>
     </ClInclude>
     <ClInclude Include="App.h" />
+    <ClInclude Include="MyWinAPI\StrOfInt.h">
+      <Filter>MyWinAPI</Filter>
+    </ClInclude>
+    <ClInclude Include="MyWinAPI\StrOfInt_BaseTsd.h">
+      <Filter>MyWinAPI\StrOfInt Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="MyWinAPI\StrOfInt_BaseImpl.h">
+      <Filter>MyWinAPI\StrOfInt Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="AppEditBox.h">
+      <Filter>AppEditBox</Filter>
+    </ClInclude>
+    <ClInclude Include="AppEditBox_internal.h">
+      <Filter>AppEditBox</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
