@@ -367,6 +367,10 @@
     <ClInclude Include="MyWinAPI\StrOfInt.h" />
     <ClInclude Include="MyWinAPI\StrOfInt_BaseImpl.h" />
     <ClInclude Include="MyWinAPI\StrOfInt_BaseTsd.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="res.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

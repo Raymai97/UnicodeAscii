@@ -77,7 +77,7 @@ EXTERN_C void MainWin_OnLoad(MainWin_t *pSelf)
 		WS_CHILD | WS_VISIBLE | WS_DEBUGBOX |
 		SS_RIGHT, 0);
 	SendMessage(hCtl, WM_SETFONT, (WPARAM)hfoEnglish, FALSE);
-	SetWindowTextA(hCtl, "Input:");
+	SetWindowTextA(hCtl, "&Input:");
 
 	hCtl = App_CreateChild(hwnd, edtInput, WC_EDIT, NULL,
 		x = 73, y - 1, cx = 330, cy = 120,
@@ -96,7 +96,7 @@ EXTERN_C void MainWin_OnLoad(MainWin_t *pSelf)
 		WS_CHILD | WS_VISIBLE | WS_DEBUGBOX |
 		SS_RIGHT, 0);
 	SendMessage(hCtl, WM_SETFONT, (WPARAM)hfoEnglish, FALSE);
-	SetWindowTextA(hCtl, "Output:");
+	SetWindowTextA(hCtl, "&Output:");
 
 	hCtl = App_CreateChild(hwnd, cboOutputEnc, WC_COMBOBOX, NULL,
 		x = 73, y = 189, cx = 160, cy = 120,
@@ -123,14 +123,14 @@ EXTERN_C void MainWin_OnLoad(MainWin_t *pSelf)
 		x = 168, y = 220, cx = 110, cy = 18,
 		WS_CHILD | WS_VISIBLE | WS_TABSTOP |
 		BS_AUTOCHECKBOX, 0);
-	SetWindowTextA(hCtl, "Escape as \\r\\n");
+	SetWindowTextA(hCtl, "&Escape as \\r\\n");
 	SendMessage(hCtl, WM_SETFONT, (WPARAM)hfoEnglish, FALSE);
 
 	hCtl = App_CreateChild(hwnd, chkFcRealLf, WC_BUTTON, NULL,
 		x = 280, y = 220, cx = 120, cy = 18,
 		WS_CHILD | WS_VISIBLE | WS_TABSTOP |
 		BS_AUTOCHECKBOX, 0);
-	SetWindowTextA(hCtl, "Line break with \\n");
+	SetWindowTextA(hCtl, "&Line break with \\n");
 	SendMessage(hCtl, WM_SETFONT, (WPARAM)hfoEnglish, FALSE);
 
 	hCtl = App_CreateChild(hwnd, btnCopyASCII, WC_BUTTON, NULL,

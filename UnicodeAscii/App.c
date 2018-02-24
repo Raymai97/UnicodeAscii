@@ -312,11 +312,16 @@ EXTERN_C HRESULT OSGetHwndTextW(HWND hwnd, LPWSTR *ppsz, int *pCount)
 	LPSTR pszA = NULL;
 	LPWSTR pszW = NULL;
 
-	hr = OSGetHwndText(hwnd, &pszA, pCount);
+	hr = OSGetHwndText(hwnd, &pszA, NULL);
 	if (!pszA) goto eof;
 	
 	hr = OSAllocWideFromMulti(&pszW, CP_ACP, pszA, -1);
 	if (FAILED(hr)) goto eof;
+
+	if (pCount) {
+		int i = 0; for (; pszW[i]; ++i);
+		*pCount = i;
+	}
 	*ppsz = pszW;
 eof:
 	APP_SafeFree(pszA, MemFree);

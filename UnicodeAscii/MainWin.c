@@ -42,6 +42,14 @@ static LRESULT CALLBACK MyWndProc(
 	{
 		MainWin_OnCommand(pSelf, LOWORD(w), HIWORD(w), (HWND)l);
 	}
+	else if (msg == WM_CTLCOLORSTATIC || msg == WM_CTLCOLORBTN)
+	{
+		/* Fix background color of Win3.1 and NT3.51 */
+		HDC hdc = (HDC)w;
+		SetBkColor(hdc, GetSysColor(COLOR_3DFACE));
+		lResult = (LRESULT)GetSysColorBrush(COLOR_3DFACE);
+		overriden = TRUE;
+	}
 	if (!overriden)
 	{
 		lResult = DefWindowProc(hwnd, msg, w, l);

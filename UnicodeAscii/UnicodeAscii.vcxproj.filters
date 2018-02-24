@@ -79,5 +79,9 @@
     <ClInclude Include="AppEditBox_internal.h">
       <Filter>AppEditBox</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="res.rc" />
   </ItemGroup>
 </Project>

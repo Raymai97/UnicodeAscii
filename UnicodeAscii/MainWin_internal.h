@@ -18,3 +18,4 @@ EXTERN_C void MainWin_OnUnload(MainWin_t *pSelf);
 EXTERN_C void MainWin_OnCommand(
 	MainWin_t *pSelf, int id, int nCode, HWND hCtl
 );
+

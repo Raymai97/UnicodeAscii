@@ -41,13 +41,13 @@ enum EscAsciiFlag {
 	*/
 	EAF_ForCoding = 1 << 1,
 	/*
-		(ForEncoding only) Use '\n' instead of '\r\n'
+		(ForCoding only) Use '\n' instead of '\r\n'
 		outside the string literal double quote.
 		Note that Win32 Edit control accept CrLf only.
 	*/
 	EAF_FC_RealLf = 1 << 2,
 	/*
-		(ForEncoding only) Use "\\r\\n" instead of "\\n"
+		(ForCoding only) Use "\\r\\n" instead of "\\n"
 		inside the string literal double quote.
 	*/
 	EAF_FC_CodeCrLf = 1 << 3,
