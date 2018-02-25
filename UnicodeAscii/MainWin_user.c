@@ -52,6 +52,7 @@ EXTERN_C void MainWin_OnLoad(MainWin_t *pSelf)
 {
 	HWND const hwnd = pSelf->hwndSelf;
 	HFONT hfoEnglish = NULL;
+	BOOL hasEditBoxFont = FALSE;
 	HWND hCtl = NULL;
 	int x = 0, y = 0, cx = 0, cy = 0, i = 0;
 
@@ -62,8 +63,8 @@ EXTERN_C void MainWin_OnLoad(MainWin_t *pSelf)
 
 	hfoEnglish = App_CreateEnglishFont();
 	pSelf->hfoEnglish = hfoEnglish;
-	OSQueryMessageFont(&pSelf->lfEditBox);
-
+	hasEditBoxFont = App_CreateEditBoxLogFont(&pSelf->lfEditBox);
+	
 	hCtl = App_CreateChild(hwnd, 0, WC_STATIC, NULL,
 		x = 15, y = 15, cx = 390, cy = 20,
 		WS_CHILD | WS_VISIBLE | WS_DEBUGBOX, 0);
@@ -85,7 +86,7 @@ EXTERN_C void MainWin_OnLoad(MainWin_t *pSelf)
 		ES_AUTOHSCROLL | ES_AUTOVSCROLL |
 		ES_NOHIDESEL | ES_MULTILINE | ES_WANTRETURN,
 		WS_EX_CLIENTEDGE);
-	MyInitEditBox(hCtl, &pSelf->lfEditBox);
+	MyInitEditBox(hCtl, hasEditBoxFont ? &pSelf->lfEditBox : NULL);
 	SetFocus(hCtl);
 
 	hCtl = App_CreateChild(hwnd, edtHidden, WC_EDIT, NULL,
@@ -207,13 +208,15 @@ static void MyInitSysMenu(HWND hwnd)
 
 static void MyInitEditBox(HWND hCtl, LOGFONT const *pLF)
 {
-	App_FontZoomSpec_t zs = { 0 };
-	zs.defFontSize = App_FontSize_PtFromLog(pLF->lfHeight);
-	zs.minFontSize = zs.defFontSize;
-	zs.maxFontSize = 36;
 	SetWindowLongPtr(hCtl, GWLP_WNDPROC, (LONG_PTR)AppEditBox_WndProc);
-	SendMessage(hCtl, EM_SetFontCopy, FALSE, (LPARAM)pLF);
-	SendMessage(hCtl, EM_SetFontZoomSpec, TRUE, (LPARAM)&zs);
+	if (pLF) {
+		App_FontZoomSpec_t zs = { 0 };
+		zs.defFontSize = App_FontSize_PtFromLog(pLF->lfHeight);
+		zs.minFontSize = zs.defFontSize;
+		zs.maxFontSize = 36;
+		SendMessage(hCtl, EM_SetFontCopy, FALSE, (LPARAM)pLF);
+		SendMessage(hCtl, EM_SetFontZoomSpec, TRUE, (LPARAM)&zs);
+	}
 }
 
 static void MyMsgErr(HWND hwnd, HRESULT hr, LPCSTR pszMsg)
@@ -247,7 +250,7 @@ static BOOL MyLocateBadChar(HWND hwnd, LPCSTR pszSad, UINT cpSad)
 
 	hHid = GetDlgItem(hwnd, edtHidden);
 	OSAllocTStrFromMulti(&pszSAD, cpSad, pszSad, -1);
-	SetWindowText(hHid, pszSAD);
+	SendMessage(hHid, WM_SETTEXT, 0, (LPARAM)pszSAD);
 	SendMessage(hHid, EM_SETSEL, 0, -1);
 	SendMessage(hHid, EM_GETSEL, 0, (LPARAM)&lenSAD);
 

@@ -342,6 +342,18 @@ EXTERN_C int OSGetDPI(void)
 	return dpi;
 }
 
+EXTERN_C BYTE OSGetOSMajorVer(void)
+{
+	typedef DWORD(WINAPI *fn_t)(void);
+	fn_t fn = (fn_t)GetProcAddress(LoadLibraryA("kernel32"),
+		"GetVersion");
+	if (fn) {
+		DWORD ver = fn();
+		return (BYTE)(ver & 0xFF);
+	}
+	return 0;
+}
+
 EXTERN_C WNDPROC OSGetButtonDefWndProc(void)
 {
 	WNDCLASS wc = { 0 };
@@ -356,13 +368,13 @@ EXTERN_C WNDPROC OSGetEditDefWndProc(void)
 	return wc.lpfnWndProc;
 }
 
-EXTERN_C BOOL OSQueryMessageFont(LOGFONT *lf)
+EXTERN_C BOOL OSQueryMessageFont(LOGFONT *pLF)
 {
 	BOOL ok = FALSE;
 	NCM_t ncm = { sizeof(ncm) };
-	ok = SystemParametersInfo(
-		SPI_GETNONCLIENTMETRICS, sizeof(ncm), &ncm, 0);
-	*lf = ncm.lfMessageFont;
+	ok = SystemParametersInfo(SPI_GETNONCLIENTMETRICS,
+		sizeof(ncm), &ncm, 0);
+	*pLF = ncm.lfMessageFont;
 	return ok;
 }
 

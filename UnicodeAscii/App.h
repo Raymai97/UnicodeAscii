@@ -125,6 +125,8 @@ EXTERN_C HFONT App_CreateFont(
 	App_FontInfo_t const *pInfo
 );
 
+EXTERN_C BOOL App_CreateEditBoxLogFont(LOGFONT *pLF);
+
 EXTERN_C HFONT App_CreateEnglishFont(void);
 
 EXTERN_C HWND App_CreateChild(
@@ -170,11 +172,13 @@ EXTERN_C HRESULT OSGetHwndTextW(HWND hwnd, LPWSTR *ppsz, int *pcch);
 
 EXTERN_C int OSGetDPI(void);
 
+EXTERN_C BYTE OSGetOSMajorVer(void);
+
 EXTERN_C WNDPROC OSGetButtonDefWndProc(void);
 
 EXTERN_C WNDPROC OSGetEditDefWndProc(void);
 
-EXTERN_C BOOL OSQueryMessageFont(LOGFONT *lf);
+EXTERN_C BOOL OSQueryMessageFont(LOGFONT *pLF);
 
 EXTERN_C BOOL OSSupportGBK(void);
 
