@@ -273,6 +273,18 @@ eof:
 #endif
 }
 
+EXTERN_C BOOL OSEdit_SelectNextChar(HWND hCtl, int iStart)
+{
+	DWORD len = 0, iEnd = 0, iEnd2 = 0;
+	len = GetWindowTextLength(hCtl);
+	for (iEnd = iStart + 1; iEnd <= len; ++iEnd)
+	{
+		SendMessage(hCtl, EM_SETSEL, (WPARAM)iStart, (LPARAM)iEnd);
+		SendMessage(hCtl, EM_GETSEL, 0, (LPARAM)&iEnd2);
+		if (iEnd2 == iEnd) { return TRUE; }
+	}
+	return FALSE;
+}
 
 EXTERN_C HRESULT OSGetHwndText(HWND hwnd, LPTSTR *ppsz, int *pLen)
 {
@@ -378,15 +390,6 @@ EXTERN_C BOOL OSQueryMessageFont(LOGFONT *pLF)
 	return ok;
 }
 
-EXTERN_C BOOL OSSupportGBK(void)
-{
-	HRESULT hr = 0;
-	LPSTR psz = NULL;
-	hr = OSAllocMultiFromWide(&psz, CP_GBK_2312, L"\x3042\x6E2C", -1);
-	APP_SafeFree(psz, MemFree);
-	return (hr == S_OK);
-}
-
 EXTERN_C HRESULT OSSetClipboardTextA(LPCSTR pszStr, SIZE_T cbStr)
 {
 	HRESULT hr = 0;
@@ -411,3 +414,11 @@ eof:
 	return hr;
 }
 
+EXTERN_C BOOL OSSupportGBK(void)
+{
+	HRESULT hr = 0;
+	LPSTR psz = NULL;
+	hr = OSAllocMultiFromWide(&psz, CP_GBK_2312, L"\x3042\x6E2C", -1);
+	APP_SafeFree(psz, MemFree);
+	return (hr == S_OK);
+}

@@ -255,7 +255,7 @@ static BOOL MyLocateBadChar(HWND hwnd, LPCSTR pszSad, UINT cpSad)
 	SendMessage(hHid, EM_GETSEL, 0, (LPARAM)&lenSAD);
 
 	hEdt = GetDlgItem(hwnd, edtInput);
-	SendMessage(hEdt, EM_SETSEL, lenSAD, lenSAD + 1);
+	OSEdit_SelectNextChar(hEdt, lenSAD);
 	SendMessage(hEdt, EM_SCROLLCARET, 0, 0);
 	App_SetFocus(hEdt);
 

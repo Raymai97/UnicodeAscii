@@ -165,6 +165,8 @@ EXTERN_C HRESULT OSAllocTStrFromMulti(
 	LPCSTR pszSrc, int cbSrc
 );
 
+EXTERN_C BOOL OSEdit_SelectNextChar(HWND hCtl, int iStart);
+
 /* This function set *ppsz only if no error and text length > 0. */
 EXTERN_C HRESULT OSGetHwndText(HWND hwnd, LPTSTR *ppsz, int *pLen);
 
@@ -180,6 +182,6 @@ EXTERN_C WNDPROC OSGetEditDefWndProc(void);
 
 EXTERN_C BOOL OSQueryMessageFont(LOGFONT *pLF);
 
-EXTERN_C BOOL OSSupportGBK(void);
-
 EXTERN_C HRESULT OSSetClipboardTextA(LPCSTR pszStr, SIZE_T cbStr);
+
+EXTERN_C BOOL OSSupportGBK(void);
