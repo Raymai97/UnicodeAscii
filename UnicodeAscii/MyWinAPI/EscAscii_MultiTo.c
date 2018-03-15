@@ -3,8 +3,11 @@
 #define _ESCASCII_IMPLTYPE_DEFINED
 
 typedef CHAR IChar_t;
-static SIZE_T const s_cbNonAscii = 4; /* \x23 */
-static BOOL const s_ForCoding_wideStrLit = FALSE;
+
+#define _ESCASCII_DquoteOn		*p++ = '\"'
+#define _ESCASCII_DquoteOff		*p++ = '\"'
+#define _ESCASCII_DquotePairCB	(2)
+#define _ESCASCII_NonAsciiCB	(4) /* \x23 */
 
 #include "EscAscii_BaseImpl.h"
 

@@ -33,8 +33,11 @@ static void MyFree(LPVOID ptr)
 #define _ESCASCII_IMPLTYPE_DEFINED
 
 typedef CHAR IChar_t;
-static SIZE_T const s_cbNonAscii = 4; /* \x23 */
-static BOOL const s_ForCoding_wideStrLit = FALSE;
+
+#define _ESCASCII_DquoteOn		*p++ = '\"'
+#define _ESCASCII_DquoteOff		*p++ = '\"'
+#define _ESCASCII_DquotePairCB	(2)
+#define _ESCASCII_NonAsciiCB	(4) /* \x23 */
 
 #endif/*_ESCASCII_IMPLTYPE_DEFINED*/
 
@@ -52,7 +55,7 @@ static SIZE_T MyStrLen(IChar_t const *psz)
 
 static void MyAppendHex(CHAR **pp, IChar_t c)
 {
-	static CHAR const *pszHex = "0123456789ABCDEF";
+	CHAR const *pszHex = "0123456789ABCDEF";
 	CHAR *p = *pp;
 	SIZE_T i = sizeof(c);
 	while (i --> 0)
@@ -64,15 +67,11 @@ static void MyAppendHex(CHAR **pp, IChar_t c)
 }
 
 
-
 /* ForCoding declare ............................. */
 
-#define FC_DQUOTE_OFF \
-	*p++ = '\"'
-
-#define FC_DQUOTE_ON \
-	if (s_ForCoding_wideStrLit) { *p++ = 'L'; } \
-	*p++ = '\"'
+#define FC_DQUOTE_OFF		_ESCASCII_DquoteOff
+#define FC_DQUOTE_ON		_ESCASCII_DquoteOn
+#define FC_DQUOTE_PAIR_CB	_ESCASCII_DquotePairCB
 
 #define FC_LINEBREAKCODE \
 	if (MY_HasFlag(eafFlags, EAF_FC_CodeCrLf)) \
@@ -83,15 +82,17 @@ static void MyAppendHex(CHAR **pp, IChar_t c)
 	if (!MY_HasFlag(eafFlags, EAF_FC_RealLf)) \
 	{ *p++ = '\r'; } *p++ = '\n'
 
+
 typedef struct MyForCodingState {
 	CHAR lastChar;
-	SIZE_T cbEscChar;
+	SIZE_T cbExtra;
 	SIZE_T nLnBreak;
 } MyForCodingState_t;
 
 typedef struct MyForCoding {
 	UINT eafFlags;
 	MyForCodingState_t state;
+	BOOL const *pLastCharNonAscii;
 } MyForCoding_t;
 
 static BOOL MyFC_Count(
@@ -122,6 +123,7 @@ static HRESULT MyBase_ToAscii(
 	BOOL const forCoding = MY_HasFlag(eafFlags, EAF_ForCoding);
 	HRESULT hr = 0;
 	BOOL isDbcsConti = FALSE;
+	BOOL lastCharNonAscii = FALSE;
 	MyForCoding_t fc = { 0 };
 	SIZE_T i = 0, cbAscii = 0;
 	LPSTR pszAscii = NULL;
@@ -132,6 +134,7 @@ static HRESULT MyBase_ToAscii(
 	}
 	
 	fc.eafFlags = eafFlags;
+	fc.pLastCharNonAscii = &lastCharNonAscii;
 	if (nSrc == 0) {
 		nSrc = MyStrLen(pszSrc);
 	}
@@ -143,14 +146,21 @@ static HRESULT MyBase_ToAscii(
 		}
 		else if ((unsigned)c < 0x80) {
 			CHAR const ascii = (c & 0xFF);
-			if (forCoding && MyFC_Count(&fc, ascii)) { continue; }
-			cbAscii += sizeof(CHAR);
+			BOOL handled = FALSE;
+			if (forCoding) {
+				handled = MyFC_Count(&fc, ascii);
+			}
+			if (!handled) {
+				cbAscii += sizeof(CHAR);
+			}
+			lastCharNonAscii = FALSE;
 			continue;
 		}
 		else if (dbcsConti) {
 			isDbcsConti = TRUE;
 		}
-		cbAscii += s_cbNonAscii;
+		cbAscii += _ESCASCII_NonAsciiCB;
+		lastCharNonAscii = TRUE;
 	}
 	if (forCoding) {
 		MyFC_AddCb(&fc, &cbAscii);
@@ -176,8 +186,14 @@ static HRESULT MyBase_ToAscii(
 		}
 		else if ((unsigned)c < 0x80) {
 			CHAR const ascii = (c & 0xFF);
-			if (forCoding && MyFC_Mutate(&fc, &p, ascii)) { continue; }
-			*p++ = ascii;
+			BOOL handled = FALSE;
+			if (forCoding) {
+				handled = MyFC_Mutate(&fc, &p, ascii);
+			}
+			if (!handled) {
+				*p++ = ascii;
+			}
+			lastCharNonAscii = FALSE;
 			continue;
 		}
 		else if (dbcsConti) {
@@ -186,6 +202,7 @@ static HRESULT MyBase_ToAscii(
 		*p++ = '\\';
 		*p++ = 'x';
 		MyAppendHex(&p, c);
+		lastCharNonAscii = TRUE;
 	}
 	if (forCoding) {
 		FC_DQUOTE_OFF;
@@ -203,6 +220,7 @@ eof:
 static BOOL MyFC_Count(
 	MyForCoding_t *pFC, CHAR const c)
 {
+	BOOL const lastCharNonAscii = *(pFC->pLastCharNonAscii);
 	MyForCodingState_t *ps = &pFC->state;
 	if (c == '\r') {
 		++(ps->nLnBreak);
@@ -218,12 +236,19 @@ static BOOL MyFC_Count(
 		return TRUE;
 	}
 	if (c == '\\') {
-		ps->cbEscChar += 2;
+		ps->cbExtra += 2;
 		return TRUE;
 	}
 	if (c == '\"') {
-		ps->cbEscChar += 2;
+		ps->cbExtra += 2;
 		return TRUE;
+	}
+	if (c >= '0' && c <= '9') {
+		if (lastCharNonAscii) {
+			/* DquoteOff, Space, DquoteOn, 'c' */
+			ps->cbExtra += FC_DQUOTE_PAIR_CB + 2;
+			return TRUE;
+		}
 	}
 	return FALSE;
 }
@@ -233,23 +258,19 @@ static void MyFC_AddCb(
 {
 	UINT const eafFlags = pFC->eafFlags;
 	MyForCodingState_t const *ps = &pFC->state;
-	
 	SIZE_T const nLnBrk = ps->nLnBreak;
 	SIZE_T const nLine = (ps->nLnBreak) + 1;
-	SIZE_T const cbEscChar = ps->cbEscChar;
-
-	SIZE_T const cbDQ = nLine *
-		(s_ForCoding_wideStrLit ? 3 : 2);
-
+	
 	SIZE_T const cbCodeNL =
 		MY_HasFlag(eafFlags, EAF_FC_CodeCrLf) ?
 		(nLnBrk * 4) : (nLnBrk * 2);
-
+	
 	SIZE_T const cbRealNL =
 		MY_HasFlag(eafFlags, EAF_FC_RealLf) ?
 		(nLnBrk) : (nLnBrk * 2);
 	
-	*pcb += cbEscChar + cbDQ + cbCodeNL + cbRealNL;
+	*pcb += (FC_DQUOTE_PAIR_CB * nLine)
+		+ cbCodeNL + cbRealNL + (ps->cbExtra);
 }
 
 static BOOL MyFC_Mutate(
@@ -257,6 +278,7 @@ static BOOL MyFC_Mutate(
 	CHAR const cNext)
 {
 	UINT const eafFlags = pFC->eafFlags;
+	BOOL const lastCharNonAscii = *(pFC->pLastCharNonAscii);
 	MyForCodingState_t *ps = &pFC->state;
 	
 	BOOL handled = FALSE;
@@ -289,6 +311,16 @@ static BOOL MyFC_Mutate(
 		*p++ = '\\';
 		*p++ = '\"';
 		goto eof;
+	}
+	if (cNext >= '0' && cNext <= '9') {
+		if (lastCharNonAscii) {
+			handled = TRUE;
+			FC_DQUOTE_OFF;
+			*p++ = ' ';
+			FC_DQUOTE_ON;
+			*p++ = cNext;
+			goto eof;
+		}
 	}
 eof:
 	if (wantMut) {
