@@ -318,7 +318,7 @@ static void MyTask_CopyAscii(MainWin_t *pSelf)
 		hr = OSAllocMultiFromWide(&pszInA, cp, pszInW, -1);
 		if (hr == S_UNREPRESENTABLE_CHAR) {
 			MyLocateBadChar(hwnd, pszInA, cp);
-			MyMsgErr(hwnd, 0, "Found unpresentable char!");
+			MyMsgErr(hwnd, 0, "Found unrepresentable char!");
 			goto eof;
 		}
 		if (hr == E_CODEPAGE_NOT_SUPPORTED) {
