@@ -20,6 +20,6 @@ EscAscii_WideToAscii(
 	LPSTR *ppszAscii,
 	SIZE_T *pcbAscii)
 {
-	return MyBase_ToAscii(pszWide, cchWide,
+	return MyBase_EscapeToAscii(pszWide, cchWide,
 		eafFlags, ppszAscii, pcbAscii);
 }

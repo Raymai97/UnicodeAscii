@@ -14,6 +14,9 @@ struct App {
 
 static App_t s_App;
 
+/*
+	EXTEND: NONCLIENTMETRICS that compatible with legacy Windows.
+*/
 typedef struct NCM {
 	UINT    cbSize;
 	int     iBorderWidth;
@@ -32,6 +35,9 @@ typedef struct NCM {
 	LOGFONT lfMessageFont;
 } NCM_t;
 
+/*
+	FED = Font Enum Data for MyFontEnumProc
+*/
 
 enum MyFED_Type {
 	FED_CheckAvail = 1
@@ -47,7 +53,7 @@ typedef struct {
 } MyFED_CheckAvail_t;
 
 
-static int CALLBACK MyFontEnumProc_CheckAvail(
+static int CALLBACK MyFontEnumProc(
 	void const *lplf, void const *lptm,
 	DWORD dwType, LPARAM user)
 {
@@ -55,11 +61,10 @@ static int CALLBACK MyFontEnumProc_CheckAvail(
 	UNREFERENCED_PARAMETER(lptm);
 	UNREFERENCED_PARAMETER(dwType);
 	BOOL done = FALSE;
-	UINT fedType = ((MyFED_Base_t *)user)->fedType;
+	UINT const fedType = ((MyFED_Base_t*)user)->fedType;
 	if (fedType == FED_CheckAvail)
 	{
-		MyFED_CheckAvail_t *pFED = (void*)user;
-		pFED->avail = TRUE;
+		((MyFED_CheckAvail_t*)user)->avail = TRUE;
 		done = TRUE;
 	}
 	return done ? 0 : 1;
@@ -94,15 +99,13 @@ EXTERN_C HFONT App_CreateFont(
 	LPCSTR const pszName = pInfo->pszName;
 	int const ptSize = pInfo->ptSize;
 	HFONT hfo = NULL;
-	MyFED_CheckAvail_t enumDat = { FED_CheckAvail };
+	MyFED_CheckAvail_t feDat = { FED_CheckAvail };
 	HDC hdc0 = NULL;
 	hdc0 = GetDC(NULL);
 	if (!hdc0) goto eof;
 
-	EnumFontsA(hdc0, pszName,
-		MyFontEnumProc_CheckAvail,
-		(LPARAM)&enumDat);
-	if (!enumDat.avail) goto eof;
+	EnumFontsA(hdc0, pszName, MyFontEnumProc, (LPARAM)&feDat);
+	if (!feDat.avail) goto eof;
 
 	hfo = CreateFontA(
 		App_FontSize_LogFromPt(ptSize),

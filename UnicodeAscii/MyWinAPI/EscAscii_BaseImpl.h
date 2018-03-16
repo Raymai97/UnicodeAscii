@@ -69,8 +69,8 @@ static void MyAppendHex(CHAR **pp, IChar_t c)
 
 /* ForCoding declare ............................. */
 
-#define FC_DQUOTE_OFF		_ESCASCII_DquoteOff
 #define FC_DQUOTE_ON		_ESCASCII_DquoteOn
+#define FC_DQUOTE_OFF		_ESCASCII_DquoteOff
 #define FC_DQUOTE_PAIR_CB	_ESCASCII_DquotePairCB
 
 #define FC_LINEBREAKCODE \
@@ -91,8 +91,8 @@ typedef struct MyForCodingState {
 
 typedef struct MyForCoding {
 	UINT eafFlags;
-	MyForCodingState_t state;
 	BOOL const *pLastCharNonAscii;
+	MyForCodingState_t state;
 } MyForCoding_t;
 
 static BOOL MyFC_Count(
@@ -111,105 +111,126 @@ static BOOL MyFC_Mutate(
 
 /* ............................. ForCoding declare */
 
+static HRESULT MyEscapeToAscii(
+	IChar_t const *pszSrc,
+	SIZE_T const nSrc,
+	UINT const eafFlags,
+	LPSTR pszAscii,
+	SIZE_T *pcbAscii)
+{
+	BOOL const dbcsConti = MY_HasFlag(eafFlags, EAF_DbcsConti);
+	BOOL const forCoding = MY_HasFlag(eafFlags, EAF_ForCoding);
+	CHAR *p = pszAscii;
+	SIZE_T i = 0, cbAscii = 0;
+	BOOL isDbcsConti = FALSE;
+	BOOL lastCharNonAscii = FALSE;
+	MyForCoding_t fc = { 0 };
+	fc.eafFlags = eafFlags;
+	fc.pLastCharNonAscii = &lastCharNonAscii;
 
-static HRESULT MyBase_ToAscii(
+	if (forCoding) {
+		if (p) { FC_DQUOTE_ON; }
+	}
+	for (i = 0; i < nSrc; ++i)
+	{
+		IChar_t const c = pszSrc[i];
+		if /* Prev char is non-ASCII */
+			(isDbcsConti)
+		{
+			/* Curr char = DBCS continuous byte */
+			isDbcsConti = FALSE;
+		}
+		else if /* Curr char is ASCII */
+			((unsigned)c < 0x80)
+		{
+			CHAR const ascii = (c & 0xFF);
+			BOOL handled = FALSE;
+			/*
+				For coding, we need to handle more, such as
+				forward-slash, double-quote, CrLf, etc.
+			*/
+			if (forCoding) {
+				handled = p
+					? MyFC_Mutate(&fc, &p, ascii)
+					: MyFC_Count(&fc, ascii);
+			}
+			/*
+				Otherwise, use the ASCII char as-is.
+			*/
+			if (!handled) {
+				if (p) { *p++ = ascii; }
+				else { cbAscii += sizeof(CHAR); }
+			}
+			lastCharNonAscii = FALSE;
+			continue;
+		}
+		else /* Curr char is non-ASCII */
+			if (dbcsConti)
+		{
+			/* Next char = DBCS continuous byte */
+			isDbcsConti = TRUE;
+		}
+		/*
+			Escape curr char to \x1234 form.
+		*/
+		if (p) {
+			*p++ = '\\';
+			*p++ = 'x';
+			MyAppendHex(&p, c);
+		}
+		else {
+			cbAscii += _ESCASCII_NonAsciiCB;
+		}
+		lastCharNonAscii = TRUE;
+	}
+	if (forCoding) {
+		if (p) { FC_DQUOTE_OFF; }
+		else { MyFC_AddCb(&fc, &cbAscii); }
+	}
+	if (pcbAscii) {
+		*pcbAscii = cbAscii;
+	}
+	return S_OK;
+}
+
+
+static HRESULT MyBase_EscapeToAscii(
 	IChar_t const *pszSrc,
 	SIZE_T nSrc,
 	UINT eafFlags,
 	LPSTR *ppszAscii,
 	SIZE_T *pcbAscii)
 {
-	BOOL const dbcsConti = MY_HasFlag(eafFlags, EAF_DbcsConti);
-	BOOL const forCoding = MY_HasFlag(eafFlags, EAF_ForCoding);
 	HRESULT hr = 0;
-	BOOL isDbcsConti = FALSE;
-	BOOL lastCharNonAscii = FALSE;
-	MyForCoding_t fc = { 0 };
-	SIZE_T i = 0, cbAscii = 0;
+	SIZE_T cbAscii = 0;
 	LPSTR pszAscii = NULL;
-	CHAR *p = NULL;
-
 	if (!pszSrc || (!ppszAscii && !pcbAscii)) {
 		hr = E_INVALIDARG; goto eof;
 	}
-	
-	fc.eafFlags = eafFlags;
-	fc.pLastCharNonAscii = &lastCharNonAscii;
+
+	/* Assume strlen if nSrc not specified. */
 	if (nSrc == 0) {
 		nSrc = MyStrLen(pszSrc);
 	}
-	for (i = 0; i < nSrc; ++i)
-	{
-		IChar_t const c = pszSrc[i];
-		if (isDbcsConti) {
-			isDbcsConti = FALSE;
-		}
-		else if ((unsigned)c < 0x80) {
-			CHAR const ascii = (c & 0xFF);
-			BOOL handled = FALSE;
-			if (forCoding) {
-				handled = MyFC_Count(&fc, ascii);
-			}
-			if (!handled) {
-				cbAscii += sizeof(CHAR);
-			}
-			lastCharNonAscii = FALSE;
-			continue;
-		}
-		else if (dbcsConti) {
-			isDbcsConti = TRUE;
-		}
-		cbAscii += _ESCASCII_NonAsciiCB;
-		lastCharNonAscii = TRUE;
-	}
-	if (forCoding) {
-		MyFC_AddCb(&fc, &cbAscii);
-	}
+
+	/* Find cbNeeded for the output. */
+	hr = MyEscapeToAscii(pszSrc, nSrc, eafFlags, NULL, &cbAscii);
+	if (FAILED(hr)) goto eof;
+	if (pcbAscii) { *pcbAscii = cbAscii; }
 	if (!ppszAscii) goto eof;
 
+	/* Alloc-Write the output. */
 	pszAscii = MyAllocZero(cbAscii + 1);
 	if (!pszAscii) {
 		hr = E_OUTOFMEMORY; goto eof;
 	}
-	isDbcsConti = FALSE;
-	p = pszAscii;
-	if (forCoding) {
-		MyForCodingState_t *ps = &fc.state;
-		ZeroMemory(ps, sizeof(*ps));
-		FC_DQUOTE_ON;
-	}
-	for (i = 0; i < nSrc; ++i)
-	{
-		IChar_t const c = pszSrc[i];
-		if (isDbcsConti) {
-			isDbcsConti = FALSE;
-		}
-		else if ((unsigned)c < 0x80) {
-			CHAR const ascii = (c & 0xFF);
-			BOOL handled = FALSE;
-			if (forCoding) {
-				handled = MyFC_Mutate(&fc, &p, ascii);
-			}
-			if (!handled) {
-				*p++ = ascii;
-			}
-			lastCharNonAscii = FALSE;
-			continue;
-		}
-		else if (dbcsConti) {
-			isDbcsConti = TRUE;
-		}
-		*p++ = '\\';
-		*p++ = 'x';
-		MyAppendHex(&p, c);
-		lastCharNonAscii = TRUE;
-	}
-	if (forCoding) {
-		FC_DQUOTE_OFF;
-	}
-	*ppszAscii = pszAscii;
+	hr = MyEscapeToAscii(pszSrc, nSrc, eafFlags, pszAscii, NULL);
+	if (FAILED(hr)) goto eof;
+	if (ppszAscii) { *ppszAscii = pszAscii; }
 eof:
-	if (pcbAscii) { *pcbAscii = cbAscii; }
+	if (FAILED(hr)) {
+		if (pszAscii) { MyFree(pszAscii); }
+	}
 	return hr;
 }
 
@@ -283,11 +304,11 @@ static BOOL MyFC_Mutate(
 	
 	BOOL handled = FALSE;
 	CHAR *p = *ppCurr;
-	BOOL wantMut = FALSE;
+	BOOL wantLnBrk = FALSE;
 	
 	if (cNext == '\r') {
 		handled = TRUE;
-		wantMut = TRUE;
+		wantLnBrk = TRUE;
 		ps->lastChar = cNext;
 		goto eof;
 	}
@@ -295,7 +316,7 @@ static BOOL MyFC_Mutate(
 		handled = TRUE;
 		/* avoid treat CrLf twice */
 		if (ps->lastChar != '\r') {
-			wantMut = TRUE;
+			wantLnBrk = TRUE;
 		}
 		ps->lastChar = cNext;
 		goto eof;
@@ -323,7 +344,7 @@ static BOOL MyFC_Mutate(
 		}
 	}
 eof:
-	if (wantMut) {
+	if (wantLnBrk) {
 		FC_LINEBREAKCODE;
 		FC_DQUOTE_OFF;
 		FC_LINEBREAK;
