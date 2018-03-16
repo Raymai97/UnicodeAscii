@@ -45,6 +45,11 @@ typedef CHAR IChar_t;
 #define MY_HasFlag(flags, f) \
 	( ((flags) & (f)) == (f) )
 
+#define MY_IsHexChar(c) ( \
+	((c) >= '0' && (c) <= '9') || \
+	((c) >= 'a' && (c) <= 'f') || \
+	((c) >= 'A' && (c) <= 'F') )
+
 
 static SIZE_T MyStrLen(IChar_t const *psz)
 {
@@ -264,12 +269,10 @@ static BOOL MyFC_Count(
 		ps->cbExtra += 2;
 		return TRUE;
 	}
-	if (c >= '0' && c <= '9') {
-		if (lastCharNonAscii) {
-			/* DquoteOff, Space, DquoteOn, 'c' */
-			ps->cbExtra += FC_DQUOTE_PAIR_CB + 2;
-			return TRUE;
-		}
+	if (lastCharNonAscii && MY_IsHexChar(c)) {
+		/* DquoteOff, Space, DquoteOn, 'c' */
+		ps->cbExtra += FC_DQUOTE_PAIR_CB + 2;
+		return TRUE;
 	}
 	return FALSE;
 }
@@ -333,15 +336,13 @@ static BOOL MyFC_Mutate(
 		*p++ = '\"';
 		goto eof;
 	}
-	if (cNext >= '0' && cNext <= '9') {
-		if (lastCharNonAscii) {
-			handled = TRUE;
-			FC_DQUOTE_OFF;
-			*p++ = ' ';
-			FC_DQUOTE_ON;
-			*p++ = cNext;
-			goto eof;
-		}
+	if (lastCharNonAscii && MY_IsHexChar(cNext)) {
+		handled = TRUE;
+		FC_DQUOTE_OFF;
+		*p++ = ' ';
+		FC_DQUOTE_ON;
+		*p++ = cNext;
+		goto eof;
 	}
 eof:
 	if (wantLnBrk) {
