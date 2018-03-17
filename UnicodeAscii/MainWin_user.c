@@ -100,9 +100,9 @@ EXTERN_C void MainWin_OnLoad(MainWin_t *pSelf)
 	SetWindowTextA(hCtl, "&Output:");
 
 	hCtl = App_CreateChild(hwnd, cboOutputEnc, WC_COMBOBOX, NULL,
-		x = 73, y = 189, cx = 160, cy = 120,
+		x = 73, y = 189, cx = 160, cy = 100,
 		WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL |
-		CBS_DROPDOWNLIST | CBS_NOINTEGRALHEIGHT, 0);
+		CBS_DROPDOWNLIST, 0);
 	SendMessage(hCtl, WM_SETFONT, (WPARAM)hfoEnglish, FALSE);
 
 	for (i = 0; i < EncodingMAX; ++i)
@@ -211,8 +211,7 @@ static void MyInitEditBox(HWND hCtl, LOGFONT const *pLF)
 	SetWindowLongPtr(hCtl, GWLP_WNDPROC, (LONG_PTR)AppEditBox_WndProc);
 	if (pLF) {
 		App_FontZoomSpec_t zs = { 0 };
-		zs.defFontSize = App_FontSize_PtFromLog(pLF->lfHeight);
-		zs.minFontSize = zs.defFontSize;
+		zs.minFontSize = 8;
 		zs.maxFontSize = 36;
 		SendMessage(hCtl, EM_SetFontCopy, FALSE, (LPARAM)pLF);
 		SendMessage(hCtl, EM_SetFontZoomSpec, TRUE, (LPARAM)&zs);

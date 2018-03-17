@@ -46,7 +46,7 @@
 #endif
 
 #define APP_Name		"UnicodeAscii"
-#define APP_VerStr		"v1.1"
+#define APP_VerStr		"v1.1a"
 
 #define APP_GetLastHr() \
 	HRESULT_FROM_WIN32(GetLastError())
@@ -75,7 +75,6 @@ typedef struct App_FontInfo {
 } App_FontInfo_t;
 
 typedef struct App_FontZoomSpec {
-	int defFontSize;
 	int minFontSize;
 	int maxFontSize;
 } App_FontZoomSpec_t;
@@ -173,6 +172,8 @@ EXTERN_C HRESULT OSGetHwndText(HWND hwnd, LPTSTR *ppsz, int *pLen);
 EXTERN_C HRESULT OSGetHwndTextW(HWND hwnd, LPWSTR *ppsz, int *pcch);
 
 EXTERN_C int OSGetDPI(void);
+
+EXTERN_C BOOL OSGetFontLogHeight(HFONT hfo, LONG *pLH);
 
 EXTERN_C BYTE OSGetOSMajorVer(void);
 

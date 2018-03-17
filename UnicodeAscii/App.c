@@ -108,7 +108,7 @@ EXTERN_C HFONT App_CreateFont(
 	if (!feDat.avail) goto eof;
 
 	hfo = CreateFontA(
-		App_FontSize_LogFromPt(ptSize),
+		-App_FontSize_LogFromPt(ptSize),
 		0, 0, 0, 0, 0, 0, 0, DEFAULT_CHARSET,
 		0, 0, 0, 0, pszName);
 eof:
@@ -130,12 +130,12 @@ EXTERN_C HWND App_CreateChild(
 
 EXTERN_C int App_FontSize_PtFromLog(int logSize)
 {
-	return -MulDiv(logSize, 72, s_App.dpi);
+	return MulDiv(logSize, 72, s_App.dpi);
 }
 
 EXTERN_C int App_FontSize_LogFromPt(int ptSize)
 {
-	return -MulDiv(ptSize, s_App.dpi, 72);
+	return MulDiv(ptSize, s_App.dpi, 72);
 }
 
 EXTERN_C void App_SetFocus(HWND hCtl)
@@ -357,6 +357,26 @@ EXTERN_C int OSGetDPI(void)
 	return dpi;
 }
 
+EXTERN_C BOOL OSGetFontLogHeight(HFONT hfo, LONG *pLH)
+{
+	BOOL ok = FALSE;
+	HDC hdc = NULL;
+	HGDIOBJ old_hfo = NULL;
+	TEXTMETRIC tm = { 0 };
+	hdc = CreateCompatibleDC(NULL);
+	if (!hdc) goto eof;
+	old_hfo = SelectObject(hdc, hfo);
+	if (!old_hfo) goto eof;
+	ok = GetTextMetrics(hdc, &tm);
+	if (!ok) goto eof;
+	*pLH = (tm.tmHeight - tm.tmInternalLeading);
+	ok = TRUE;
+eof:
+	if (old_hfo) { SelectObject(hdc, old_hfo); }
+	if (hdc) { DeleteDC(hdc); }
+	return ok;
+}
+
 EXTERN_C BYTE OSGetOSMajorVer(void)
 {
 	typedef DWORD(WINAPI *fn_t)(void);
@@ -389,7 +409,7 @@ EXTERN_C BOOL OSQueryMessageFont(LOGFONT *pLF)
 	NCM_t ncm = { sizeof(ncm) };
 	ok = SystemParametersInfo(SPI_GETNONCLIENTMETRICS,
 		sizeof(ncm), &ncm, 0);
-	*pLF = ncm.lfMessageFont;
+	if (ok) { *pLF = ncm.lfMessageFont; }
 	return ok;
 }
 

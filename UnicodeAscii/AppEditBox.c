@@ -52,15 +52,18 @@ EXTERN_C BOOL AppEditBox_SetFontZoomSpec(
 	App_FontZoomSpec_t const *pSpec)
 {
 	BOOL ok = FALSE;
+	LONG logHeight = 0;
 	pSelf->zoomEnabled = enable;
-	pSelf->zoomSpec = *pSpec;
-	if (!enable) {
-		ok = TRUE; goto eof;
-	}
+	if (!enable) goto eof;
 	if (!pSpec) goto eof;
+	if (pSpec->maxFontSize < pSpec->minFontSize) goto eof;
 	if (pSpec->minFontSize > pSpec->maxFontSize) goto eof;
-	if (pSpec->defFontSize < pSpec->minFontSize) goto eof;
-	if (pSpec->defFontSize > pSpec->maxFontSize) goto eof;
+
+	ok = OSGetFontLogHeight(pSelf->hfoSelf, &logHeight);
+	if (!ok) goto eof;
+	pSelf->defFontSize = App_FontSize_PtFromLog(logHeight);
+	pSelf->minFontSize = pSpec->minFontSize;
+	pSelf->maxFontSize = pSpec->maxFontSize;
 	ok = AppEditBox_Zoom(pSelf, 0);
 eof:
 	if (!ok) {

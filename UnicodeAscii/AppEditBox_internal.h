@@ -7,7 +7,9 @@ struct MySelf {
 	HFONT hfoSelf;
 	LOGFONT lfSelf;
 	BOOL zoomEnabled;
-	App_FontZoomSpec_t zoomSpec;
+	LONG defFontSize;
+	LONG minFontSize;
+	LONG maxFontSize;
 };
 
 
