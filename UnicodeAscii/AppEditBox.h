@@ -11,10 +11,15 @@ enum AppEditBox_MsgCode {
 	/* (LPARAM)(LOGFONT const *) */
 	EM_SetFontCopy,
 	/* (WPARAM)(BOOL)enableZoom */
-	/* (LPARAM)(App_FontZoomSpec_t const *) */
+	/* (LPARAM)(EM_FontZoomSpec_t const *) */
 	EM_SetFontZoomSpec
 };
 
+typedef struct EM_FontZoomSpec {
+	int defFontSize;
+	int minFontSize;
+	int maxFontSize;
+} EM_FontZoomSpec_t;
 
 
 EXTERN_C void AppEditBox_Init(void);

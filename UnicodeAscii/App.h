@@ -74,11 +74,6 @@ typedef struct App_FontInfo {
 	int ptSize;
 } App_FontInfo_t;
 
-typedef struct App_FontZoomSpec {
-	int minFontSize;
-	int maxFontSize;
-} App_FontZoomSpec_t;
-
 
 /*
 	App Global Constant ........

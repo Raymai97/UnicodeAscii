@@ -47,32 +47,6 @@ EXTERN_C BOOL AppEditBox_SetFontCopy(
 }
 
 
-EXTERN_C BOOL AppEditBox_SetFontZoomSpec(
-	MySelf_t *pSelf, BOOL enable,
-	App_FontZoomSpec_t const *pSpec)
-{
-	BOOL ok = FALSE;
-	LONG logHeight = 0;
-	pSelf->zoomEnabled = enable;
-	if (!enable) goto eof;
-	if (!pSpec) goto eof;
-	if (pSpec->maxFontSize < pSpec->minFontSize) goto eof;
-	if (pSpec->minFontSize > pSpec->maxFontSize) goto eof;
-
-	ok = OSGetFontLogHeight(pSelf->hfoSelf, &logHeight);
-	if (!ok) goto eof;
-	pSelf->defFontSize = App_FontSize_PtFromLog(logHeight);
-	pSelf->minFontSize = pSpec->minFontSize;
-	pSelf->maxFontSize = pSpec->maxFontSize;
-	ok = AppEditBox_Zoom(pSelf, 0);
-eof:
-	if (!ok) {
-		pSelf->zoomEnabled = FALSE;
-	}
-	return ok;
-}
-
-
 EXTERN_C LRESULT CALLBACK AppEditBox_WndProc(
 	HWND hCtl, UINT msg, WPARAM w, LPARAM l)
 {
@@ -132,7 +106,7 @@ static LRESULT MyWndProc(
 	else if (msg == EM_SetFontZoomSpec)
 	{
 		lResult = AppEditBox_SetFontZoomSpec(pSelf, (BOOL)w,
-			(App_FontZoomSpec_t const *)l);
+			(EM_FontZoomSpec_t const *)l);
 		overriden = TRUE;
 	}
 	if (!overriden)

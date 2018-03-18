@@ -210,7 +210,7 @@ static void MyInitEditBox(HWND hCtl, LOGFONT const *pLF)
 {
 	SetWindowLongPtr(hCtl, GWLP_WNDPROC, (LONG_PTR)AppEditBox_WndProc);
 	if (pLF) {
-		App_FontZoomSpec_t zs = { 0 };
+		EM_FontZoomSpec_t zs = { 0 };
 		zs.minFontSize = 8;
 		zs.maxFontSize = 36;
 		SendMessage(hCtl, EM_SetFontCopy, FALSE, (LPARAM)pLF);

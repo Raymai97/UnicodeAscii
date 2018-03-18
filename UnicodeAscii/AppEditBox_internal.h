@@ -20,7 +20,7 @@ EXTERN_C BOOL AppEditBox_SetFontCopy(
 
 EXTERN_C BOOL AppEditBox_SetFontZoomSpec(
 	MySelf_t *pSelf, BOOL enable,
-	App_FontZoomSpec_t const *pSpec
+	EM_FontZoomSpec_t const *pSpec
 );
 
 /*
